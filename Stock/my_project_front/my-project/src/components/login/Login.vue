@@ -1,0 +1,96 @@
+<template>
+  <section>
+      <article class='login-wrapper'>
+          <div class="input_pack">
+              <input type="text" placeholder="아이디를 입력해주세요" id='loginId' class="login id" v-model="loginId" title="아이디입력">
+          </div>
+          <div class="input_pack">
+              <input type="password" maxlength=9 placeholder="비밀번호를 입력해주세요" id='loginPassword' class="login password" v-model="loginPassword" title="패스워드입력">
+          </div>
+          <div class="input_pack">
+              <input type="password" placeholder="인증서 비밀번호를 입력해주세요" id='loginCertPassword' class="login certPassword" v-model="loginCertPassword" title="패스워드입력">
+          </div>
+          <button class="login-button" @click="doLogin">로그인</button>
+      </article>
+  </section>
+</template>
+
+<script>
+export default {
+    data () {
+        return {
+            loginId: '',
+            loginPassword: '',
+            loginCertPassword: ''
+        };
+    },
+    methods: {
+        doLogin () {
+            alert('login!');
+            // 1. 암웨이 로그인일 경우
+            if (this.loginId === '') {
+                alert('아이디를 입력하지 않으셨습니다. 아이디를 입력해주세요.', () => {
+                    document.getElementById('loginId').focus();
+                });
+                return;
+            } else if (this.loginPassword === '') {
+                alert('비밀번호를 입력하지 않으셨습니다. 비밀번호를 입력해주세요.', () => {
+                    document.getElementById('loginPassword').focus();
+                });
+                return;
+            } else if (this.loginCertPassword === '') {
+                alert('인증서 비밀번호를 입력하지 않으셨습니다. 비밀번호를 입력해주세요.', () => {
+                    document.getElementById('loginCertPassword').focus();
+                });
+                return;
+            }
+
+            let loginId = this.loginId.trim();
+            let loginPw = this.loginPassword.trim();
+            let loginCertPassword = this.loginCertPassword.trim();
+            let formData = new FormData();
+            formData.append('userId', loginId);
+            formData.append('userPw', loginPw);
+            formData.append('userCertPassword', loginCertPassword);
+            // 정상적으로 formData에 들어가느니것 확인
+            this.$Axios.post(`${process.env.APIURL}/login/`, formData)
+                .then(response => {
+                    // data
+                    let data = response;
+                    console.log(data);
+                    if (data.status === 'SUCCESS') {
+                        this.$session.set('user_id', this.loginId);
+                        this.$session.set('user_name', this.loginPassword);
+                    } else {
+                        this.loginPassword = '';
+                        alert(`등록되지 않은 아이디이거나, 아이디 또는 비밀번호를 잘못 입력하셨습니다.[ ${data.error.code} ]`, function () {
+                            document.getElementById('loginPassword').value = '';
+                        });
+                    }
+                });
+        }
+    }
+};
+</script>
+
+<style>
+    .login-wrapper{
+        margin-top: 100px;
+        text-align: center;
+    }
+    .login{
+        margin-top: 10px;
+        width: 460px;
+        height: 48px;
+    }
+    .login-button{
+        margin-top: 35px;
+        width: 460px;
+        height: 56px;
+        font-weight: bold;
+        background-color: #19ce60;
+        border: 1px solid #15c654;
+        color: blanchedalmond;
+        font-size: larger;
+    }
+</style>
