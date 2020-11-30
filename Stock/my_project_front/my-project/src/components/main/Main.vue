@@ -1,5 +1,6 @@
 <template>
   <section>
+      <PopupAccount :accountList='accountList'/>
       <article @click="popupStockDetail()" style="cursor: pointer;" class='stock-list'>
             <div>
                 {{ title }}
@@ -20,6 +21,7 @@
 
 <script>
 import PopupStock from '@/components/popup/PopupStock.vue';
+import PopupAccount from '@/components/popup/PopupAccountList.vue';
 
 export default {
     data () {
@@ -33,11 +35,14 @@ export default {
             now_cost: '',
             start_cost: '',
             end_cost: '',
-            info: {}
+            info: {},
+            accountList: this.$route.params.accountList,
+            accountNum: this.$session.get('accountNum')
         };
     },
     components: {
-        PopupStock
+        PopupStock,
+        PopupAccount
     },
     created () {
         this.fetchStockInfo();

@@ -7,6 +7,10 @@
 
 <script>
 export default {
+    data () {
+        return {
+        };
+    },
     // 거래 내역 페이지로 이동
     methods: {
         goHome () {

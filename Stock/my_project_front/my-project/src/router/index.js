@@ -10,7 +10,10 @@ export default new Router({
         {
             path: '/',
             name: 'mainPage',
-            component: Main
+            component: Main,
+            meta: {
+                accountList: ''
+            }
         },
         {
             path: '/transactiondetails',

@@ -4,12 +4,14 @@ MAINPAGE = "http://localhost:8002/#/"
 LOGINPAGE = "http://localhost:8002/#/login"
 
 LOGINSTATE = False
+DATAWAITING = False
 
-DEMO_LOGINID = "jdo6186"
-DEMO_LOGINPASSWORD = "ahdml1004"
 
-REAL_LOGINID = ""
-REAL_LOGINPASSWORD = ""
-REAL_LOGINCERTPASSWORD = ""
+LOGINID = ""
+LOGINPASSWORD = ""
+LOGINCERTPASSWORD = ""
 
 SERVER_PORT = 20001
+
+MAIN_SERVER = "hts.ebestsec.co.kr"
+DEMO_SERVER = "demo.ebestsec.co.kr"

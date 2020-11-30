@@ -1,27 +1,29 @@
 <template>
-  <section>
-      <article class='login-wrapper'>
-          <div class="input_pack">
-              <input type="text" placeholder="아이디를 입력해주세요" id='loginId' class="login id" v-model="loginId" title="아이디입력">
-          </div>
-          <div class="input_pack">
-              <input type="password" maxlength=9 placeholder="비밀번호를 입력해주세요" id='loginPassword' class="login password" v-model="loginPassword" title="패스워드입력">
-          </div>
-          <div class="input_pack">
-              <input type="password" placeholder="인증서 비밀번호를 입력해주세요" id='loginCertPassword' class="login certPassword" v-model="loginCertPassword" title="패스워드입력">
-          </div>
-          <button class="login-button" @click="doLogin">로그인</button>
-      </article>
-  </section>
+    <section>
+        <article class='login-wrapper'>
+            <div class="input_pack">
+                <input type="text" placeholder="아이디를 입력해주세요" id='loginId' class="login id" v-model="loginId" title="아이디입력">
+            </div>
+            <div class="input_pack">
+                <input type="password" maxlength=8 placeholder="비밀번호를 입력해주세요" id='loginPassword' class="login password" v-model="loginPassword" title="패스워드입력">
+            </div>
+            <div class="input_pack">
+                <input type="password" placeholder="인증서 비밀번호를 입력해주세요" id='loginCertPassword' class="login certPassword" v-model="loginCertPassword" title="패스워드입력">
+            </div>
+            <button class="login-button" @click="doLogin">로그인</button>
+        </article>
+    </section>
 </template>
 
 <script>
+
 export default {
     data () {
         return {
             loginId: '',
             loginPassword: '',
-            loginCertPassword: ''
+            loginCertPassword: '',
+            show: false
         };
     },
     methods: {
@@ -38,11 +40,6 @@ export default {
                     document.getElementById('loginPassword').focus();
                 });
                 return;
-            } else if (this.loginCertPassword === '') {
-                alert('인증서 비밀번호를 입력하지 않으셨습니다. 비밀번호를 입력해주세요.', () => {
-                    document.getElementById('loginCertPassword').focus();
-                });
-                return;
             }
 
             let loginId = this.loginId.trim();
@@ -55,16 +52,23 @@ export default {
             // 정상적으로 formData에 들어가느니것 확인
             this.$Axios.post(`${process.env.APIURL}/login/`, formData)
                 .then(response => {
-                    // data
-                    let data = response;
-                    console.log(data);
+                    let data = response.data;
                     if (data.status === 'SUCCESS') {
-                        this.$session.set('user_id', this.loginId);
-                        this.$session.set('user_name', this.loginPassword);
+                        // Vue의 server session에 데이터 담아주기
+                        // TODO
+                        // 배포하고 싶다면 pw들은 암호화 처리해야된다.
+                        let userData = {
+                            'userId': loginId,
+                            'userPw': loginPw,
+                            'userCertPassword': loginCertPassword
+                        };
+                        window.sessionStorage.setItem('userData', userData);
+                        this.$router.push({name: 'mainPage', params: {accountList: data.data.accounts}});
                     } else {
-                        this.loginPassword = '';
-                        alert(`등록되지 않은 아이디이거나, 아이디 또는 비밀번호를 잘못 입력하셨습니다.[ ${data.error.code} ]`, function () {
+                        alert(`등록되지 않은 아이디이거나, 아이디 또는 비밀번호를 잘못 입력하셨습니다.[ ${data.error} ]`, function () {
+                            document.getElementById('loginId').value = '';
                             document.getElementById('loginPassword').value = '';
+                            document.getElementById('loginCertPassword').value = '';
                         });
                     }
                 });

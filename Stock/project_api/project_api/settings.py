@@ -156,3 +156,6 @@ CORS_ALLOW_HEADERS = (
     'x-csrftoken',
     'x-requested-with',
 )
+
+# 브라우저 종료시 세션도 제거
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True

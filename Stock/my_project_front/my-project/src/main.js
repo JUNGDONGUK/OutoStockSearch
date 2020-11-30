@@ -9,7 +9,7 @@ import axios from 'axios';
 // Axios 설정
 Vue.prototype.$Axios = axios;
 // 응답 시간 설정
-axios.defaults.timeout = 20000;
+axios.defaults.timeout = 50000;
 // 세션 세팅
 var sessionOptions = {
     persist: true
