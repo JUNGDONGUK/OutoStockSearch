@@ -1,15 +1,9 @@
 
+
+
 # redirect로 보낼 주소들
 MAINPAGE = "http://localhost:8002/#/"
 LOGINPAGE = "http://localhost:8002/#/login"
-
-LOGINSTATE = False
-DATAWAITING = False
-
-
-LOGINID = ""
-LOGINPASSWORD = ""
-LOGINCERTPASSWORD = ""
 
 SERVER_PORT = 20001
 

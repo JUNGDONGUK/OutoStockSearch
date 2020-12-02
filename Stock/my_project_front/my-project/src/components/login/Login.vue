@@ -28,8 +28,6 @@ export default {
     },
     methods: {
         doLogin () {
-            alert('login!');
-            // 1. 암웨이 로그인일 경우
             if (this.loginId === '') {
                 alert('아이디를 입력하지 않으셨습니다. 아이디를 입력해주세요.', () => {
                     document.getElementById('loginId').focus();
@@ -53,23 +51,19 @@ export default {
             this.$Axios.post(`${process.env.APIURL}/login/`, formData)
                 .then(response => {
                     let data = response.data;
+                    console.log(data);
                     if (data.status === 'SUCCESS') {
                         // Vue의 server session에 데이터 담아주기
                         // TODO
                         // 배포하고 싶다면 pw들은 암호화 처리해야된다.
-                        let userData = {
-                            'userId': loginId,
-                            'userPw': loginPw,
-                            'userCertPassword': loginCertPassword
-                        };
-                        window.sessionStorage.setItem('userData', userData);
-                        this.$router.push({name: 'mainPage', params: {accountList: data.data.accounts}});
+                        this.$session.set('userId', loginId);
+                        this.$session.set('accountList', data.data.accounts);
+                        this.$router.push('/');
                     } else {
-                        alert(`등록되지 않은 아이디이거나, 아이디 또는 비밀번호를 잘못 입력하셨습니다.[ ${data.error} ]`, function () {
-                            document.getElementById('loginId').value = '';
-                            document.getElementById('loginPassword').value = '';
-                            document.getElementById('loginCertPassword').value = '';
-                        });
+                        alert(`${data.error}`);
+                        document.getElementById('loginId').value = '';
+                        document.getElementById('loginPassword').value = '';
+                        document.getElementById('loginCertPassword').value = '';
                     }
                 });
         }

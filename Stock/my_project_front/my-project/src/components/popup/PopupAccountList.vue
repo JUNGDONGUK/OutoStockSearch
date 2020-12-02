@@ -1,22 +1,24 @@
 <template>
-    <section id='accountSection' v-if="isLoad">
-        <article class='login-wrapper' v-show='!isConnect'>
+    <section id='accountSection'>
+        <article class='account-wrapper' v-show='!isConnect'>
             <div class="input_pack">
-                <select id="accountNum" class="login accountNum">
-                    <option :value="account" v-for="account in accountList" :key="account">{{ account }} {{ accountNum1111 }}</option>
+                <select id="accountNum" class="account accountNum">
+                    <option :value="account" :key="account" v-for="account in accountList">{{ account }} {{ accountNum }}</option>
                 </select>
             </div>
             <div class="input_pack">
-                <input type="password" placeholder="비밀번호를 입력해주세요" id='accountPw' class="login accountPassword" v-model="accountPw" title="패스워드입력">
+                <input type="password" placeholder="비밀번호를 입력해주세요" id='accountPw' class="account accountPassword" v-model="accountPw" title="패스워드입력">
             </div>
-            <button class="login-button" @click="accountConnect">계좌 데이터 확인</button>
+            <button class="account-button" @click="accountConnect">계좌 데이터 확인</button>
         </article>
         <article v-show='isConnect'>
                 <li>
-                    계좌 번호 : {{ accountNum }}
-                    계좌 잔고 : {{ accountNum }}
-                    계좌 수익금 : {{ accountNum }}
-                    계좌 수익률 : {{ accountNum }}
+                    추정자산 : {{ this.responseData.estimatedNetWorth }}
+                    매입금액 : {{ this.responseData.evaluationPNL }}
+                    평가손익 : {{ this.responseData.evaluationRateOfReturnByStock }}
+                    평가 수익율 : {{ this.responseData.realProfit }}
+                    실현손익 : {{ this.responseData.realRateOfReturnByStock }}
+                    실현 수익율 : {{ this.responseData.totalPrice }}
                 </li>
         </article>
     </section>
@@ -29,53 +31,64 @@ export default {
         return {
             isChecked: false,
             accountPassword: '',
-            isConnect: false,
+            isConnect: true,
             accountNum: this.$session.get('accountNum'),
             accountPw: '',
-            isLoad: false
+            responseData: []
         };
     },
     created () {
-        this.isLoad = true;
+        if (this.$session.get('userAccountNum') === undefined) {
+            this.isConnect = false;
+        }
     },
     methods: {
         accountConnect () {
             let selectedAccountNum = document.getElementById('accountNum').value;
             let selectedAccountPw = document.getElementById('accountPw').value;
             let formData = new FormData();
-            formData.append('userId', this.$session.get('userId'));
-            formData.append('userPw', this.$session.get('userPw'));
-            formData.append('userCertPassword', this.$session.get('userCertPassword'));
             formData.append('accountNum', selectedAccountNum);
             formData.append('accountPw', selectedAccountPw);
+
+            // 원하는 시간 내에 데이터가 넘어오지 않는다면 세션을 초기화해 로그인 페이지로 되돌려보내기
+            var timer = window.setTimeout(function () {
+                this.sessionClear();
+            }.bind(this), 10000);
             this.$Axios.post(`${process.env.APIURL}/account/`, formData)
                 .then(response => {
                     let popData = response.data;
                     if (popData.status === 'SUCCESS') {
-                        this.$session.set('accountNum', selectedAccountNum);
-                        this.$session.set('accountPw', selectedAccountPw);
-                        alert('SUCCESS');
+                        this.$session.set('userAccountNum', selectedAccountNum);
+                        this.isConnect = true;
+                        this.responseData = popData.data;
+                        // 데이터가 정상적으로 넘어왔으므로 setTimeout 종료
+                        clearTimeout(timer);
                     } else {
-                        alert('LOGINCHEACKFAIL');
+                        alert(`로그인에 실패하였습니다. ${popData.error}`);
                         this.$router.push('/login');
                     }
                 });
+        },
+        sessionClear () {
+            alert('로그인 세션이 만료되었습니다.');
+            this.$session.clear();
+            this.$router.push('/login');
         }
     }
 };
 </script>
 
 <style>
-    .login-wrapper{
+    .account-wrapper{
         margin-top: 100px;
         text-align: center;
     }
-    .login{
+    .account{
         margin-top: 10px;
         width: 460px;
         height: 48px;
     }
-    .login-button{
+    .account-button{
         margin-top: 35px;
         width: 460px;
         height: 56px;
