@@ -27,14 +27,7 @@ class XAStockChartEvent:
             return HttpResponse(json.dumps({'status' : 'FAIL', 'error' : '차트를 불러오는 도중 오류가 발생하였습니다.'}))
         
         # dll파일을 통해 데이터 받기
-        stockList = XAConnector.stockChart(XAConnector, shcode, gubun, ncnt, qrycnt, sdate, edate)
+        data = XAConnector.stockChart(XAConnector, shcode, gubun, ncnt, qrycnt, sdate, edate)
 
-        # 유저가 원하는 데이터만 따로 세팅
-        data = []
-        for i in stockList:
-            if stockName in i['hname']:
-                data.append(i)
-            else:
-                continue
 
         return HttpResponse(json.dumps({'status' : 'SUCCESS', 'data' : data}))

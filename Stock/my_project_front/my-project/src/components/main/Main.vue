@@ -62,8 +62,8 @@ export default {
             gubun: 2,
             ncnt: 1,
             qrycnt: 500,
-            sdate: '',
-            edate: ''
+            sdate: this.$moment(new Date()).add(-499, 'days').format('YYYYMMDD'),
+            edate: this.$moment(new Date()).format('YYYYMMDD')
         };
     },
     components: {
@@ -79,9 +79,9 @@ export default {
     },
     methods: {
         popupStockDetail (stock) {
-            alert('차트가져온다잇! : ' + stock.shcode);
             this.title = stock.hname;
             this.shcode = stock.shcode;
+            alert('차트가져온다잇! : ' + this.title + ' // ' + this.shcode + ' // ' + this.sdate + ' // ' + this.edate);
             let formData = new FormData();
             formData.append('shcode', this.shcode);
             formData.append('gubun', this.gubun);
@@ -95,6 +95,7 @@ export default {
                     console.log(data);
                     if (data.status === 'SUCCESS') {
                         alert('SUCCESS');
+                        this.detail = data.data;
                     } else {
                         alert(`${data.error}`);
                     }

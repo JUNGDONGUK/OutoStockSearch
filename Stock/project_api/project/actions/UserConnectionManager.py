@@ -192,6 +192,7 @@ class XAConnector:
         XAQueryEventHandlerT8430.data_flag = False
         return stockList
 
+
     def stockChart(self, shcode, gubun, ncnt, qrycnt, sdate, edate):
         # TODO Print 지우기
         print("접속상태 확인 : ", XAConnector.is_connected(XAConnector))
@@ -218,14 +219,14 @@ class XAConnector:
         # 봉의 개수 (최대 몇개 노출시킬 것인지 결정 => 1 ~ 500까지만 유효)
         instXAQueryT4201.SetFieldData("t4201InBlock", "qrycnt", 0, qrycnt)
         # 일자 기준 (0: 전체일자, 1: 오늘만 => 전체를 사용할 예정)
-        instXAQueryT4201.SetFieldData("t4201InBlock", "tdgb", 0, 1)
+        instXAQueryT4201.SetFieldData("t4201InBlock", "tdgb", 0, 0)
         # 시작일, 종료일(최소 일봉부터 이 내용이 적용됌 틱봉, 분봉은 이 내용이 적용되지 않으므로 주의 필요)
         instXAQueryT4201.SetFieldData("t4201InBlock", "sdate", 0, sdate)
         instXAQueryT4201.SetFieldData("t4201InBlock", "edate", 0, edate)
         # 아래는 기본설정을 이용하면 됌
-        instXAQueryT4201.SetFieldData("t4201InBlock", "cts_date", 0, ' ')
-        instXAQueryT4201.SetFieldData("t4201InBlock", "cts_time", 0, ' ')
-        instXAQueryT4201.SetFieldData("t4201InBlock", "cts_daygb", 0, ' ')
+        instXAQueryT4201.SetFieldData("t4201InBlock", "cts_date", 0, " ")
+        instXAQueryT4201.SetFieldData("t4201InBlock", "cts_time", 0, " ")
+        instXAQueryT4201.SetFieldData("t4201InBlock", "cts_daygb", 0, " ")
 
 
         # 입력한 데이터로 서버에 request요청
@@ -235,28 +236,30 @@ class XAConnector:
         while XAQueryEventHandlerT4201.data_flag == False:
             pythoncom.PumpWaitingMessages()
 
-        # 전체 데이터가 몇개인지 체크
-        count = instXAQueryT4201.GetBlockCount("t8430OutBlock")
-
         # 내보낼 데이터 목록
         stockDetailList = []
 
+        # 전체 데이터가 몇개인지 체크
+        count = int(qrycnt)
+        print("count : ", count)
         # 원하는 만큼 데이터 추출하기
         for i in range(count):
-            stock_date = instXAQueryT4201.GetFieldData("t8430OutBlock1", "date", i)             # 날짜
-            stock_time = instXAQueryT4201.GetFieldData("t8430OutBlock1", "time", i)             # 시간
-            stock_open = instXAQueryT4201.GetFieldData("t8430OutBlock1", "open", i)             # 시가
-            stock_high = instXAQueryT4201.GetFieldData("t8430OutBlock1", "high", i)             # 고가
-            stock_low = instXAQueryT4201.GetFieldData("t8430OutBlock1", "low", i)               # 저가
-            stock_close = instXAQueryT4201.GetFieldData("t8430OutBlock1", "close", i)           # 종가
-            stock_jdiff_vol = instXAQueryT4201.GetFieldData("t8430OutBlock1", "jdiff_vol", i)   # 거래량
-            # stock_value = instXAQueryT4201.GetFieldData("t8430OutBlock1", "value", i)           # 거래대금
-            # stock_jongchk = instXAQueryT4201.GetFieldData("t8430OutBlock1", "jongchk", i)       # 수정구분
-            # stock_rate = instXAQueryT4201.GetFieldData("t8430OutBlock1", "rate", i)             # 수정비율
-            # stock_pricechk = instXAQueryT4201.GetFieldData("t8430OutBlock1", "pricechk", i)     # 수정주가반영항목
-            # stock_ratevalue = instXAQueryT4201.GetFieldData("t8430OutBlock1", "ratevalue", i)   # 수정비율반영거래대금
+            stock_date = instXAQueryT4201.GetFieldData("t4201OutBlock1", "date", i)             # 날짜
+            stock_time = instXAQueryT4201.GetFieldData("t4201OutBlock1", "time", i)             # 시간
+            stock_open = instXAQueryT4201.GetFieldData("t4201OutBlock1", "open", i)             # 시가
+            stock_high = instXAQueryT4201.GetFieldData("t4201OutBlock1", "high", i)             # 고가
+            stock_low = instXAQueryT4201.GetFieldData("t4201OutBlock1", "low", i)               # 저가
+            stock_close = instXAQueryT4201.GetFieldData("t4201OutBlock1", "close", i)           # 종가
+            stock_jdiff_vol = instXAQueryT4201.GetFieldData("t4201OutBlock1", "jdiff_vol", i)   # 거래량
+            # stock_value = instXAQueryT4201.GetFieldData("t4201OutBlock1", "value", i)           # 거래대금
+            # stock_jongchk = instXAQueryT4201.GetFieldData("t4201OutBlock1", "jongchk", i)       # 수정구분
+            # stock_rate = instXAQueryT4201.GetFieldData("t4201OutBlock1", "rate", i)             # 수정비율
+            # stock_pricechk = instXAQueryT4201.GetFieldData("t4201OutBlock1", "pricechk", i)     # 수정주가반영항목
+            # stock_ratevalue = instXAQueryT4201.GetFieldData("t4201OutBlock1", "ratevalue", i)   # 수정비율반영거래대금
             stock_detail = {'stock_date' : stock_date, 'stock_time' : stock_time, 'stock_open' : stock_open, 'stock_high' : stock_high, 'stock_low' : stock_low, 'stock_close' : stock_close, 'stock_jdiff_vol' : stock_jdiff_vol}
             stockDetailList.append(stock_detail)
 
+        print("출력될 데이터 : ", stockDetailList)
         XAQueryEventHandlerT4201.data_flag = False
+
         return stockDetailList

@@ -5,6 +5,7 @@ import App from './App';
 import router from './router';
 import VueSession from 'vue-session';
 import axios from 'axios';
+import VueMoment from 'vue-moment';
 
 // Axios 설정
 Vue.prototype.$Axios = axios;
@@ -15,6 +16,8 @@ var sessionOptions = {
     persist: true
 };
 Vue.use(VueSession, sessionOptions);
+// VueMoment 세팅
+Vue.use(VueMoment);
 // 기본 Vue 세팅
 Vue.config.productionTip = false;
 /* eslint-disable no-new */
