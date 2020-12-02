@@ -6,6 +6,7 @@ import router from './router';
 import VueSession from 'vue-session';
 import axios from 'axios';
 import VueMoment from 'vue-moment';
+import VueGoogleCharts from 'vue-google-charts';
 
 // Axios 설정
 Vue.prototype.$Axios = axios;
@@ -15,9 +16,15 @@ axios.defaults.timeout = 50000;
 var sessionOptions = {
     persist: true
 };
+
+// 사용할 라이브러리 관리
+// VueSession
 Vue.use(VueSession, sessionOptions);
-// VueMoment 세팅
+// VueMoment
 Vue.use(VueMoment);
+// GoogleChart
+Vue.use(VueGoogleCharts);
+
 // 기본 Vue 세팅
 Vue.config.productionTip = false;
 /* eslint-disable no-new */

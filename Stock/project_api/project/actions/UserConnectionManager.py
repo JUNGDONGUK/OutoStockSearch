@@ -241,7 +241,6 @@ class XAConnector:
 
         # 전체 데이터가 몇개인지 체크
         count = int(qrycnt)
-        print("count : ", count)
         # 원하는 만큼 데이터 추출하기
         for i in range(count):
             stock_date = instXAQueryT4201.GetFieldData("t4201OutBlock1", "date", i)             # 날짜
@@ -256,10 +255,11 @@ class XAConnector:
             # stock_rate = instXAQueryT4201.GetFieldData("t4201OutBlock1", "rate", i)             # 수정비율
             # stock_pricechk = instXAQueryT4201.GetFieldData("t4201OutBlock1", "pricechk", i)     # 수정주가반영항목
             # stock_ratevalue = instXAQueryT4201.GetFieldData("t4201OutBlock1", "ratevalue", i)   # 수정비율반영거래대금
+            if stock_date == "" :
+                break
             stock_detail = {'stock_date' : stock_date, 'stock_time' : stock_time, 'stock_open' : stock_open, 'stock_high' : stock_high, 'stock_low' : stock_low, 'stock_close' : stock_close, 'stock_jdiff_vol' : stock_jdiff_vol}
             stockDetailList.append(stock_detail)
 
-        print("출력될 데이터 : ", stockDetailList)
         XAQueryEventHandlerT4201.data_flag = False
 
         return stockDetailList

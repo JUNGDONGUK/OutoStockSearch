@@ -34,7 +34,7 @@
             </div>
             <div class="line"></div>
         </article>
-        <PopupStock :stock_title='title' :stock_detail='detail' :stock_data='data' v-show='show' @closePopup='closePopup'/>
+        <PopupStock :stock_title='title' :chartData='chartData' :options='options' v-show='show' @closePopup='closePopup'/>
     </section>
 </template>
 
@@ -46,9 +46,16 @@ export default {
     data () {
         return {
             title: '샘플 종목',
-            detail: '샘플 설명',
-            data: {
-                lambda: '람다'
+            chartData: [['Date', 'Low', 'Open', 'Close', 'High']],
+            options: {
+                legend: 'none',
+                series: {
+                    0: { color: '#a561bd' },
+                    1: { color: '#c784de' },
+                    2: { color: '#f1ca3a' },
+                    3: { color: '#2980b9' },
+                    4: { color: '#e67e22' }
+                }
             },
             show: false,
             now_cost: '',
@@ -95,7 +102,17 @@ export default {
                     console.log(data);
                     if (data.status === 'SUCCESS') {
                         alert('SUCCESS');
-                        this.detail = data.data;
+                        for (var i = 0; i < data.data.length; i++) {
+                            var stockDate = data.data[i].stock_date;
+                            var stockLow = data.data[i].stock_low *= 1;
+                            var stockOpen = data.data[i].stock_open *= 1;
+                            var stockClose = data.data[i].stock_close *= 1;
+                            var stockHigh = data.data[i].stock_high *= 1;
+                            var stockChartData = [stockDate, stockLow, stockOpen, stockClose, stockHigh];
+                            // data.data[i]['stock_date'], data.data[i]['stock_low'], data.data[i]['stock_open'], data.data[i]['stock_close'], data.data[i]['stock_high']];
+                            this.chartData.push(stockChartData);
+                        }
+                        console.log(this.chartData);
                     } else {
                         alert(`${data.error}`);
                     }

@@ -7,7 +7,7 @@
             </header>
             <article class="pagepop-article">
                 차트 데이터 출력<br/>
-                {{ stock_data }}
+                    <GChart type="CandlestickChart" :data="chartData" :options="chartOptions"/>
             </article>
             <aside class="pagepop-aside">
                 <button class="pagepop-default-button call">매수</button>
@@ -19,9 +19,13 @@
 </template>
 
 <script>
+import { GChart } from 'vue-google-charts';
 export default {
+    components: {
+        GChart
+    },
     props: [
-        'stock_title', 'stock_detail', 'stock_data'
+        'stock_title', 'chartData', 'chartOptions'
     ],
     methods: {
         closePopup () {
@@ -85,6 +89,7 @@ export default {
         color: black;
         background-color: #c8c8c8;
         float: left;
+        overflow: scroll;
     }
     .pagepop-aside {
         height: 90%;
