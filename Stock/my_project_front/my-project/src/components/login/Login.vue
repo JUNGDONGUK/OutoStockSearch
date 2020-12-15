@@ -26,6 +26,9 @@ export default {
             show: false
         };
     },
+    created () {
+        this.$session.clear();
+    },
     methods: {
         doLogin () {
             if (this.loginId === '') {
@@ -48,10 +51,9 @@ export default {
             formData.append('userPw', loginPw);
             formData.append('userCertPassword', loginCertPassword);
             // 정상적으로 formData에 들어가느니것 확인
-            this.$Axios.post(`${process.env.APIURL}/login/`, formData)
+            this.$Axios.post(`${process.env.APIURL}/login/`, formData, { withCredentials: true })
                 .then(response => {
                     let data = response.data;
-                    console.log(data);
                     if (data.status === 'SUCCESS') {
                         // Vue의 server session에 데이터 담아주기
                         // TODO

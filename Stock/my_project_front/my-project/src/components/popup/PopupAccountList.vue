@@ -3,22 +3,17 @@
         <article class='account-wrapper' v-show='!isConnect'>
             <div class="input_pack">
                 <select id="accountNum" class="account accountNum">
-                    <option :value="account" :key="account" v-for="account in accountList">{{ account }} {{ accountNum }}</option>
+                    <option :value="account" :key="index" v-for="(account, index) in accountList">{{ account }} {{ accountNum }}</option>
                 </select>
             </div>
             <div class="input_pack">
-                <input type="password" placeholder="비밀번호를 입력해주세요" id='accountPw' class="account accountPassword" v-model="accountPw" title="패스워드입력">
+                <input type="password" placeholder="비밀번호를 입력해주세요" id='accountPassword' class="account accountPassword" v-model="accountPassword" title="패스워드입력">
             </div>
             <button class="account-button" @click="accountConnect">계좌 데이터 확인</button>
         </article>
         <article v-show='isConnect'>
                 <li>
-                    추정자산 : {{ this.responseData.estimatedNetWorth }}
-                    매입금액 : {{ this.responseData.evaluationPNL }}
-                    평가손익 : {{ this.responseData.evaluationRateOfReturnByStock }}
-                    평가 수익율 : {{ this.responseData.realProfit }}
-                    실현손익 : {{ this.responseData.realRateOfReturnByStock }}
-                    실현 수익율 : {{ this.responseData.totalPrice }}
+                    추정자산 : {{ this.$session.get('userProperty') }}
                 </li>
         </article>
     </section>
@@ -30,11 +25,9 @@ export default {
     data () {
         return {
             isChecked: false,
-            accountPassword: '',
             isConnect: true,
-            accountNum: this.$session.get('accountNum'),
-            accountPw: '',
-            responseData: []
+            accountNum: this.$session.get('userAccountNum'),
+            accountPassword: ''
         };
     },
     created () {
@@ -42,37 +35,60 @@ export default {
             this.isConnect = false;
         }
     },
+    mounted () {
+        // 화면이 그려질 때마다 계좌정보 최신화 시켜주기
+        // this.accountConnect();
+    },
     methods: {
         accountConnect () {
             let selectedAccountNum = document.getElementById('accountNum').value;
-            let selectedAccountPw = document.getElementById('accountPw').value;
+            let selectedAccountPw = this.accountPassword;
+            if (selectedAccountNum === '' || selectedAccountPw === '') {
+                alert('계좌번호 또는 비밀번호를 확인해주세요');
+                return false;
+            }
             let formData = new FormData();
             formData.append('accountNum', selectedAccountNum);
             formData.append('accountPw', selectedAccountPw);
-
             // 원하는 시간 내에 데이터가 넘어오지 않는다면 세션을 초기화해 로그인 페이지로 되돌려보내기
-            var timer = window.setTimeout(function () {
-                this.sessionClear();
+            let timer = window.setTimeout(function () {
+                this.forceLogout();
             }.bind(this), 10000);
-            this.$Axios.post(`${process.env.APIURL}/account/`, formData)
+            this.$Axios.post(`${process.env.APIURL}/account/`, formData, { withCredentials: true })
                 .then(response => {
                     let popData = response.data;
                     if (popData.status === 'SUCCESS') {
+                        alert('성공 : AccountListVue : ' + popData.userProperty);
+                        this.$session.set('userProperty', popData.userProperty);
                         this.$session.set('userAccountNum', selectedAccountNum);
+                        this.$session.set('userAccountPw', this.accountPassword);
                         this.isConnect = true;
-                        this.responseData = popData.data;
                         // 데이터가 정상적으로 넘어왔으므로 setTimeout 종료
                         clearTimeout(timer);
+                        this.$forceUpdate();
                     } else {
-                        alert(`로그인에 실패하였습니다. ${popData.error}`);
-                        this.$router.push('/login');
+                        if (popData.errorCode === '001') {
+                            alert('세션이 만료되었습니다. 로그인을 다시 진행해주세요');
+                            this.forceLogout();
+                        } else {
+                            alert('데이터를 가져오는 도중 오류가 발생하였습니다.\n' + popData.error);
+                            this.forceLogout();
+                        }
                     }
                 });
         },
-        sessionClear () {
+        forceLogout () {
             alert('로그인 세션이 만료되었습니다.');
             this.$session.clear();
-            this.$router.push('/login');
+            this.$Axios.get(`${process.env.APIURL}/logout/`)
+                .then(response => {
+                    let data = response.data;
+                    if (data.status === 'SUCCESS') {
+                        this.$router.push(`/login`);
+                    } else {
+                        alert(`${data.error}`);
+                    }
+                });
         }
     }
 };

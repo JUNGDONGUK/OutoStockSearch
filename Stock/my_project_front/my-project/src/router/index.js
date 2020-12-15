@@ -3,6 +3,8 @@ import Router from 'vue-router';
 import Main from '@/components/main/Main.vue';
 import TransactionDetails from '@/components/account/TransactionDetails.vue';
 import Login from '@/components/login/Login.vue';
+import SystemTradding from '@/components/tradding/SystemTradding.vue';
+
 Vue.use(Router);
 
 export default new Router({
@@ -24,6 +26,11 @@ export default new Router({
             path: '/login',
             name: 'loginPage',
             component: Login
+        },
+        {
+            path: '/systemtradding',
+            name: 'systemTradding',
+            component: SystemTradding
         }
     ]
 });

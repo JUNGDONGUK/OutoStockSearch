@@ -13,41 +13,38 @@ from core.constants import *
 from datetime import datetime
 import time
 
-class XAStockChartEvent:
-    def stock_chart(request):
+class XAStockTraddingEvent:
+    def stock_tradding(request):
         time.sleep(0.5)
         # 클라이언트 단에서 값 가져오기
-        shcode = request.POST.get("shcode")
-        gubun = request.POST.get("gubun")
-        ncnt = request.POST.get("ncnt")
-        qrycnt = request.POST.get("qrycnt")
-        sdate = request.POST.get("sdate")
-        edate = request.POST.get("edate")
         acnt_no = request.POST.get("AcntNo")
-        input_pw = request.POST.get("AccountPw")
-
-        # 데이터 검증
-        if (shcode == "" or shcode == None):
-            return HttpResponse(json.dumps({'status' : 'FAIL', 'error' : 'stock_chart에서 차트를 불러오는 도중  발생하였습니다.', 'errorCode' : VALUEERROR}))
+        input_pw = request.POST.get("InptPwd")
+        isu_no = request.POST.get("IsuNo")
+        ord_qty = request.POST.get("OrdQty")
+        prd_prc = request.POST.get("OrdPrc")
+        bns_tp_code = request.POST.get("BnsTpCode")
+        ordprc_ptn_code = request.POST.get("OrdprcPtnCode")
         
-        # 데이터 연속조회 여부 판단
-        chart_is_continue = False
-        account_is_continue = False
-
+        # 데이터 검증
+        if (acnt_no == "" or acnt_no == None):
+            return HttpResponse(json.dumps({'status' : 'FAIL', 'error' : 'stock_tradding에서 차트를 불러오는 도중  발생하였습니다.', 'errorCode' : VALUEERROR}))
+        
         # dll파일을 통해 데이터 받기
-        data = XAConnector.stock_chart(XAConnector, shcode, gubun, ncnt, qrycnt, sdate, edate, chart_is_continue)
+        data = XAConnector.stock_tradding(XAConnector, acnt_no, input_pw, isu_no, ord_qty, prd_prc, bns_tp_code, ordprc_ptn_code)
         if (data == ConnectionRefusedError):
             return HttpResponse(json.dumps({'status' : 'FAIL', 'error' : '세션이 만료되었습니다.', 'errorCode' : SESSIONOUT}))
         elif (data == TimeoutError):
             return HttpResponse(json.dumps({'status' : 'FAIL', 'error' : '세션이 만료되었습니다.', 'errorCode' : SESSIONOUT}))
 
-        
+        print('매매는 성공')
+
         # 거래 내역 조회하기
-        datas = XAConnector.user_data_search(XAConnector, acnt_no, input_pw, account_is_continue)
-        if (datas == ConnectionRefusedError):
+        account_is_continue = False
+        transaction_details = XAConnector.user_data_search(XAConnector, acnt_no, input_pw, account_is_continue)
+        if (transaction_details == ConnectionRefusedError):
             return HttpResponse(json.dumps({'status' : 'FAIL', 'error' : '세션이 만료되었습니다.', 'errorCode' : SESSIONOUT}))
-        elif (datas == TimeoutError):
+        elif (transaction_details == TimeoutError):
             return HttpResponse(json.dumps({'status' : 'FAIL', 'error' : '세션이 만료되었습니다.', 'errorCode' : SESSIONOUT}))
         print('거래내역조회 성공')
 
-        return HttpResponse(json.dumps({'status' : 'SUCCESS', 'data' : data, 'userProperty' : datas[0], 'transactionDetails': datas[1]}))
+        return HttpResponse(json.dumps({'status' : 'SUCCESS', 'data' : data, 'userProperty' : transaction_details[0], 'transactionDetails': transaction_details[1]}))

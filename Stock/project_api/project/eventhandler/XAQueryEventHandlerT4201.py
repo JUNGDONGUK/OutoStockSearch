@@ -2,5 +2,5 @@
 class XAQueryEventHandlerT4201:
     data_flag = False
     def OnReceiveData(self, code):
-        print("리시브 데이터 상태점검 : ", code)
+        print("T4201 데이터 상태점검 : ", code)
         XAQueryEventHandlerT4201.data_flag = True

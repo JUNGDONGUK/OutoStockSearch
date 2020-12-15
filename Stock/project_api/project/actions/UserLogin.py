@@ -1,4 +1,3 @@
-from core.constants import *
 import win32com.client
 import pythoncom
 from django.http import HttpResponseRedirect,HttpResponse
@@ -12,12 +11,11 @@ from project.actions.UserConnectionManager import XAConnector
 
 # 로그인 기능
 class LoginManager:
-    def doLogin(request):
+    def do_login(request):
         try:
-            if XAConnector.is_connected(XAConnector) == True:
-                XAConnector.disconnect_server(XAConnector)
-            
-            XAConnector.connect_server(XAConnector)
+            print('접속상태 확인 : ', XAConnector.is_connected(XAConnector))
+            if XAConnector.is_connected(XAConnector) == None :
+                XAConnector.connect_server(XAConnector)
 
             # 클라이언트단에서 값 받아 접속할 ID PW, 를 지정하기
             if request.method == 'POST':
@@ -34,8 +32,13 @@ class LoginManager:
 
             return HttpResponse(json.dumps({'status' : 'SUCCESS', 'data' : data}))
         except Exception as e:
-            return HttpResponse(json.dumps({'status' : 'FAIL', 'error' : '유저 정보를 가져오는 도중 오류가 발생하였습니다.' + e}))
+            return HttpResponse(json.dumps({'status' : 'FAIL', 'error' : '유저 정보를 가져오는 도중  발생하였습니다.'}))
 
+    def do_logout(request):
+        if XAConnector.disconnect_server(XAConnector):
+            return HttpResponse(json.dumps({'status' : 'SUCCESS'}))
+        else:
+            return HttpResponse(json.dumps({'status' : 'FAIL', 'error' : '발생하였습니다.'}))
         
 
 
