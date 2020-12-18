@@ -93,10 +93,10 @@ export default {
             if (nowShow === true) {
                 this.drawChart(this.chartData);
             }
+        },
+        isTransction () {
+            this.accountConnect();
         }
-        // isTransction () {
-        //     this.accountConnect();
-        // }
     },
     methods: {
         closePopup () {
@@ -187,12 +187,10 @@ export default {
                 }
             } catch (e) {
                 alert('차트를 불러오는 도중 다음과 같은 에러가 발생하였습니다 \n' + e.name + '\n' + e.message);
-                return this.$forceUpdate();
             }
             return true;
         },
         forceLogout () {
-            alert('로그인 세션이 만료되었습니다.');
             this.$session.clear();
             this.$Axios.get(`${process.env.APIURL}/logout/`)
                 .then(response => {
@@ -205,17 +203,15 @@ export default {
                 });
         },
         callTradding () {
-            alert('매수합니다.' + this.nowPrice);
             this.gubun = 2;
             this.traddingAxios();
         },
         putTradding () {
-            alert('매도합니다.' + this.nowPrice);
             this.gubun = 1;
             this.traddingAxios();
         },
         sysTradding () {
-            alert('시스템거래를 시작합니다.' + this.nowPrice);
+            console.log('시스템거래를 시작합니다.' + this.nowPrice);
         },
         doCheck () {
             this.isCheck = !this.isCheck;
@@ -240,21 +236,24 @@ export default {
                     if (data.status === 'SUCCESS') {
                         this.transactionDetails = data.transactionDetails;
                         this.$nextTick(function () {
-                            this.$forceUpdate();
+                            this.isTransction = true;
                         });
                     } else {
                         if (data.errorCode === '001') {
                             alert('세션이 만료되었습니다. 로그인을 다시 진행해주세요');
-                            this.forceLogout();
+                            this.$nextTick(function () {
+                                this.forceLogout();
+                            });
                         } else {
                             alert('데이터를 가져오는 도중 오류가 발생하였습니다.\n' + data.error);
-                            this.forceLogout();
+                            this.$nextTick(function () {
+                                this.forceLogout();
+                            });
                         }
                     }
                 });
         },
         accountConnect () {
-            alert('작동');
             let selectedAccountNum = this.$session.get('userAccountNum');
             let selectedAccountPw = this.$session.get('userAccountPw');
             if (selectedAccountNum === '' || selectedAccountPw === '') {
@@ -264,33 +263,29 @@ export default {
             let formData = new FormData();
             formData.append('accountNum', selectedAccountNum);
             formData.append('accountPw', selectedAccountPw);
-            // 원하는 시간 내에 데이터가 넘어오지 않는다면 세션을 초기화해 로그인 페이지로 되돌려보내기
-            let timer = window.setTimeout(function () {
-                this.forceLogout();
-            }.bind(this), 10000);
-            setTimeout(
-                this.$Axios.post(`${process.env.APIURL}/account/`, formData)
-                    .then(response => {
-                        let popData = response.data;
-                        alert('데이터가져옴');
-                        if (popData.status === 'SUCCESS') {
-                            alert('성공 : PopupStock : ' + popData.userProperty + '\n 종목정보 : ' + popData.transactionDetails);
-                            this.$session.set('userProperty', popData.userProperty);
-                            this.transactionDetails = popData.transactionDetails;
-                            // 데이터가 정상적으로 넘어왔으므로 setTimeout 종료
-                            clearTimeout(timer);
-                            this.isTransction = true;
-                            this.$forceUpdate();
+            this.$Axios.post(`${process.env.APIURL}/account/`, formData)
+                .then(response => {
+                    let popData = response.data;
+                    console.log('PopupStock accountConnect 데이터가져옴');
+                    if (popData.status === 'SUCCESS') {
+                        console.log('PopupStock accountConnect 성공');
+                        this.$session.set('userProperty', popData.userProperty);
+                        this.transactionDetails = popData.transactionDetails;
+                        this.$forceUpdate();
+                    } else {
+                        if (popData.errorCode === '001') {
+                            alert('세션이 만료되었습니다. 로그인을 다시 진행해주세요');
+                            this.$nextTick(function () {
+                                this.forceLogout();
+                            });
                         } else {
-                            if (popData.errorCode === '001') {
-                                alert('세션이 만료되었습니다. 로그인을 다시 진행해주세요');
+                            alert('데이터를 가져오는 도중 오류가 발생하였습니다.\n' + popData.error);
+                            this.$nextTick(function () {
                                 this.forceLogout();
-                            } else {
-                                alert('데이터를 가져오는 도중 오류가 발생하였습니다.\n' + popData.error);
-                                this.forceLogout();
-                            }
+                            });
                         }
-                    }), 500);
+                    }
+                });
         }
     }
 };

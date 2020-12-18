@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import Router from 'vue-router';
 import Main from '@/components/main/Main.vue';
-import TransactionDetails from '@/components/account/TransactionDetails.vue';
+import TopTransactionCrawling from '@/components/account/TopTransactionCrawling.vue';
 import Login from '@/components/login/Login.vue';
 import SystemTradding from '@/components/tradding/SystemTradding.vue';
 
@@ -20,7 +20,7 @@ export default new Router({
         {
             path: '/transactiondetails',
             name: 'transactionDetails',
-            component: TransactionDetails
+            component: TopTransactionCrawling
         },
         {
             path: '/login',

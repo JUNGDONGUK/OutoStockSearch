@@ -1,5 +1,5 @@
 <template>
-    <nav>
+    <nav v-show="isLoad">
         <button @click="goHome">HOME</button>
         <button @click="goTransactionDetails">거래 내역 조회</button>
         <button @click="goSystemTradding">시스템트레이딩</button>
@@ -11,8 +11,18 @@
 export default {
     data () {
         return {
+            isLoad: false,
+            userCheck: this.$session.get('userId')
         };
     },
+    created () {
+        if (!this.$session.get('userId')) {
+            this.isLoad = false;
+        } else {
+            this.isLoad = true;
+        }
+    },
+
     // 거래 내역 페이지로 이동
     methods: {
         goHome () {
@@ -26,11 +36,7 @@ export default {
             this.$Axios.get(`${process.env.APIURL}/logout/`)
                 .then(response => {
                     let data = response.data;
-                    if (data.status === 'SUCCESS') {
-                        this.$router.push(`/login`);
-                    } else {
-                        alert(`${data.error}`);
-                    }
+                    (data.status === 'SUCCESS') ? this.$router.push(`/login`) : alert(`${data.error}`);
                 });
         },
         goSystemTradding () {

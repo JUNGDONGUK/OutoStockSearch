@@ -87,7 +87,7 @@ export default {
                 .then(response => {
                     let popData = response.data;
                     if (popData.status === 'SUCCESS') {
-                        alert('성공 : SystemTradding');
+                        console.log('성공 : SystemTradding');
                         this.$session.set('userProperty', popData.userProperty);
                         if (popData.userRetainedItem[0] !== undefined) {
                             this.traddingList = popData.transactionDetails;
@@ -98,10 +98,14 @@ export default {
                     } else {
                         if (popData.errorCode === '001') {
                             alert('세션이 만료되었습니다. 로그인을 다시 진행해주세요');
-                            this.forceLogout();
+                            this.$nextTick(function () {
+                                this.forceLogout();
+                            });
                         } else {
                             alert('데이터를 가져오는 도중 오류가 발생하였습니다.\n' + popData.error);
-                            this.forceLogout();
+                            this.$nextTick(function () {
+                                this.forceLogout();
+                            });
                         }
                     }
                 });
@@ -125,7 +129,7 @@ export default {
                 .then(response => {
                     let data = response.data;
                     if (data.status === 'SUCCESS') {
-                        alert('성공 : SystemTradding : SUCCESS');
+                        console.log('성공 : SystemTradding : SUCCESS');
                         this.stockList = data.useStock;
                         this.$forceUpdate();
                         console.log(this.stockList);

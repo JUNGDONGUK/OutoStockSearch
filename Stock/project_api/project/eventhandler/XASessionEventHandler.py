@@ -6,8 +6,10 @@ class XASessionEventHandler:
     def OnLogin(self, code, msg):
         if code == '0000':
             XASessionEventHandler.data_flag = True
+            return code
         else :
             print('로그인 실패 : ', msg)
+            return msg
 
     def OnDisconnect(self, code):
         print('OnDisconnect')

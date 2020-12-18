@@ -1,6 +1,6 @@
 <template>
     <section id='accountSection'>
-        <article class='account-wrapper' v-show='!isConnect'>
+        <article class='account-wrapper' v-if="!isConnect">
             <div class="input_pack">
                 <select id="accountNum" class="account accountNum">
                     <option :value="account" :key="index" v-for="(account, index) in accountList">{{ account }} {{ accountNum }}</option>
@@ -11,7 +11,7 @@
             </div>
             <button class="account-button" @click="accountConnect">계좌 데이터 확인</button>
         </article>
-        <article v-show='isConnect'>
+        <article v-if="isConnect">
                 <li>
                     추정자산 : {{ this.$session.get('userProperty') }}
                 </li>
@@ -24,20 +24,17 @@ export default {
     props: ['accountList'],
     data () {
         return {
-            isChecked: false,
-            isConnect: true,
             accountNum: this.$session.get('userAccountNum'),
-            accountPassword: ''
+            accountPassword: '',
+            isConnect: false
         };
     },
     created () {
-        if (this.$session.get('userAccountNum') === undefined) {
+        if (!this.$session.get('userProperty')) {
             this.isConnect = false;
+        } else {
+            this.isConnect = true;
         }
-    },
-    mounted () {
-        // 화면이 그려질 때마다 계좌정보 최신화 시켜주기
-        // this.accountConnect();
     },
     methods: {
         accountConnect () {
@@ -50,35 +47,36 @@ export default {
             let formData = new FormData();
             formData.append('accountNum', selectedAccountNum);
             formData.append('accountPw', selectedAccountPw);
-            // 원하는 시간 내에 데이터가 넘어오지 않는다면 세션을 초기화해 로그인 페이지로 되돌려보내기
-            let timer = window.setTimeout(function () {
-                this.forceLogout();
-            }.bind(this), 10000);
             this.$Axios.post(`${process.env.APIURL}/account/`, formData, { withCredentials: true })
                 .then(response => {
                     let popData = response.data;
                     if (popData.status === 'SUCCESS') {
-                        alert('성공 : AccountListVue : ' + popData.userProperty);
+                        console.log('accountConnect 성공');
+                        console.log(popData.userProperty);
                         this.$session.set('userProperty', popData.userProperty);
                         this.$session.set('userAccountNum', selectedAccountNum);
                         this.$session.set('userAccountPw', this.accountPassword);
                         this.isConnect = true;
-                        // 데이터가 정상적으로 넘어왔으므로 setTimeout 종료
-                        clearTimeout(timer);
                         this.$forceUpdate();
+                        this.$nextTick(function () {
+                            location.reload();
+                        });
                     } else {
                         if (popData.errorCode === '001') {
                             alert('세션이 만료되었습니다. 로그인을 다시 진행해주세요');
-                            this.forceLogout();
+                            this.$nextTick(function () {
+                                this.forceLogout();
+                            });
                         } else {
                             alert('데이터를 가져오는 도중 오류가 발생하였습니다.\n' + popData.error);
-                            this.forceLogout();
+                            this.$nextTick(function () {
+                                this.forceLogout();
+                            });
                         }
                     }
                 });
         },
         forceLogout () {
-            alert('로그인 세션이 만료되었습니다.');
             this.$session.clear();
             this.$Axios.get(`${process.env.APIURL}/logout/`)
                 .then(response => {

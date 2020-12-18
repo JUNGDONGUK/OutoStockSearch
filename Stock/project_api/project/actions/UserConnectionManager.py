@@ -8,6 +8,7 @@ import win32com.client as win_client
 import pythoncom
 from pandas import Series, DataFrame
 import time
+from django.http import HttpResponseRedirect, HttpResponse, HttpRequest
 
 from project.eventhandler.XASessionEventHandler import XASessionEventHandler
 from project.eventhandler.XAQueryEventHandlerT0424 import XAQueryEventHandlerT0424
@@ -24,23 +25,27 @@ class XAConnector:
     ebest_pw = None
     ebest_cpwd = None
     account_list = []
-    ebest_address = None
-    ebest_port = None
     typeOfStockData = None
     stock_lists = None
     stock_lists_code = None
     # def __init__(self):
     #     self.xa_session = None
- 
+
+    def __init__(self):
+        self.connect_server()
+
+
+#  ==============================================================================================
+# 서버연결
+
+
     def connect_server(self):
-        print('서버연결 시도합니다.\n     self.xa_session: ', self.xa_session, '\n     XAConnector.ebest_address: ', XAConnector.ebest_address, '\n     XAConnector.is_connected: ', XAConnector.is_connected(XAConnector))
-        if self.xa_session is None or XAConnector.ebest_address is None or XAConnector.is_connected(XAConnector) is None:
+        print('서버연결 시도합니다.\n     self.xa_session: ', self.xa_session, '\n     self.ebest_address: ', self.ebest_address, '\n     self.is_connected: ', self.is_connected())
+        if self.xa_session is None or self.ebest_address is None or self.is_connected() is None:
             pythoncom.CoInitialize()
             self.xa_session = win_client.DispatchWithEvents("XA_Session.XASession", XASessionEventHandler)
             pythoncom.CoUninitialize()
-            XAConnector.ebest_address = DEMO_SERVER
-            XAConnector.ebest_port = SERVER_PORT
-        return self.xa_session.ConnectServer(XAConnector.ebest_address, XAConnector.ebest_port)
+        return self.xa_session.ConnectServer(DEMO_SERVER, SERVER_PORT)
 
     def is_connected(self):
         if self.xa_session is None:
@@ -48,23 +53,71 @@ class XAConnector:
         else:
             result = self.xa_session.IsConnected()
             return result
-    
+
+    def disconnect_server(self):
+        try:
+            self.ebest_id = None
+            self.ebest_pw = None
+            self.ebest_cpwd = None
+            self.account_list = []
+            self.ebest_address = None
+            self.ebest_port = None
+            self.xa_session = None
+        except Exception as e:
+            print(e)
+            return False
+        return True
+
+
+#  ==============================================================================================
+# 로그인
+
+
+    def do_login(request):
+        # try:
+        # 클라이언트단에서 값 받아 접속할 ID PW, 를 지정하기
+        if self.xa_session != None:
+            print('연결 되어 있습니다.')
+        else :
+            print('연결 되어 있지 않습니다. 연결을 시도합니다.')
+            self.connect_server()
+        if HttpRequest.method == 'POST':
+            user_id = HttpRequest.POST.get("userId")
+            user_pw = HttpRequest.POST.get("userPw")
+            cert_pw = HttpRequest.POST.get("userCertPassword")
+        print("user_id는 뭘까요? : ", user_id)
+        self.login(user_id, user_pw, cert_pw)
+        data = {
+            'user_id' : user_id,
+            'accounts' : self.get_account_list()
+        }
+        # HttpResponse.set_cookie('accessCookie', data)
+        return HttpResponse(json.dumps({'status' : 'SUCCESS', 'data' : data}))
+
+        # except :
+        #     return HttpResponse(json.dumps({'status' : 'FAIL', 'error' : '유저 정보를 가져오는 도중  발생하였습니다.'}))
+
+    def do_logout(request):
+        if self.disconnect_server():
+            return HttpResponse(json.dumps({'status' : 'SUCCESS'}))
+        else:
+            return HttpResponse(json.dumps({'status' : 'FAIL', 'error' : '발생하였습니다.'}))
+
     def logout(self):
         self.xa_session.Logout()
-        XAConnector.disconnect_server(self)
 
     def login(self, user_id, user_pw, user_cpwd):
-        XAConnector.ebest_id = user_id
-        XAConnector.ebest_pw = user_pw
-        XAConnector.ebest_cpwd = user_cpwd
-        if XAConnector.ebest_id == None or XAConnector.ebest_pw == None: 
+        self.ebest_id = user_id
+        self.ebest_pw = user_pw
+        self.ebest_cpwd = user_cpwd
+        if self.ebest_id == None or self.ebest_pw == None: 
             return ValueError
         else: 
-            self.xa_session.Login(XAConnector.ebest_id, XAConnector.ebest_pw, XAConnector.ebest_cpwd, 0, 0)
+            self.xa_session.Login(self.ebest_id, self.ebest_pw, self.ebest_cpwd, 0, 0)
         
         # 응답이 올 때까지 대기
         print("XASession 응답 대기 : ", XASessionEventHandler.data_flag)
-        result = XAConnector.watting(XAConnector, XASessionEventHandler)
+        result = self.watting(self, XASessionEventHandler)
         print("XASession 응답 결과 : ", result)
         if result == TimeoutError:
             return TimeoutError
@@ -73,49 +126,24 @@ class XAConnector:
 
         return XASessionEventHandler.login_flag
  
+
+#  ==================================================================================
+# 계좌 정보 조회
+
+
     def get_account_list(self):
         
         account_ctn = self.xa_session.GetAccountListCount()
  
         for i in range(account_ctn):
             account_num = self.xa_session.GetAccountList(i)
-            XAConnector.account_list.append(account_num)
+            self.account_list.append(account_num)
         
-        return XAConnector.account_list
+        return self.account_list
  
-    def disconnect_server(self):
-        try:
-            XAConnector.ebest_id = None
-            XAConnector.ebest_pw = None
-            XAConnector.ebest_cpwd = None
-            XAConnector.account_list = []
-            XAConnector.ebest_address = None
-            XAConnector.ebest_port = None
-            self.xa_session = None
-        except Exception as e:
-            print(e)
-            return False
-        return True
-    
-    def watting(self, handler):
-            start = time.time()
-            print("핸들러 명 : ", handler, "\n시작 시간: ", start)
-            while handler.data_flag == False:
-                pythoncom.PumpWaitingMessages()
-                time.sleep(0.001)
-                # end = time.time()
-                # now_time = end - start
-                # if (now_time) >= 30:
-                #     return TimeoutError
-            return XAConnector.data_flag_tune(self, handler)
-
-    def data_flag_tune(self, handler):
-        handler.data_flag = False
-        return True
-
     def user_data_search(self, account_num, account_pw, is_continue):
-        print("접속상태 확인 : ", XAConnector.is_connected(XAConnector))
-        if XAConnector.is_connected(XAConnector) == None:
+        print("접속상태 확인 : ", self.is_connected(self))
+        if self.is_connected(self) == None:
             return ConnectionRefusedError
         
 
@@ -143,7 +171,7 @@ class XAConnector:
             
         # 응답이 올 때까지 대기
         print("T0424 응답 대기 : ", XAQueryEventHandlerT0424.data_flag)
-        result = XAConnector.watting(XAConnector, XAQueryEventHandlerT0424)
+        result = self.watting(self, XAQueryEventHandlerT0424)
         print("T0424 응답 결과 : ", result)
         if result == TimeoutError:
             return result
@@ -178,6 +206,53 @@ class XAConnector:
         return [user_property, retained_item_list]
 
 
+ 
+    def account_select(request):
+        time.sleep(0.5)
+        # 서버로 부터 계좌번호, 비밀번호 받기
+        response_data = {}
+        account_num = request.POST.get("accountNum").strip()
+        account_pw = request.POST.get("accountPw").strip()
+        if (account_num == "" or account_num == None) :
+            return HttpResponse(json.dumps({'status' : 'FAIL', 'error' : '계좌정보가 존재하지 않습니다. 로그인페이지로 이동합니다.', 'errorCode' : VALUEERROR}))
+
+        is_continue = False
+        response_data = XAConnector.user_data_search(XAConnector, account_num, account_pw, is_continue)
+        is_continue = True
+        if (response_data == ConnectionRefusedError):
+            return HttpResponse(json.dumps({'status' : 'FAIL', 'error' : '세션이 만료되었습니다.', 'errorCode' : SESSIONOUT}))
+        elif (response_data == TimeoutError):
+            return HttpResponse(json.dumps({'status' : 'FAIL', 'error' : '세션이 만료되었습니다.', 'errorCode' : SESSIONOUT}))
+
+        return HttpResponse(json.dumps({'status' : 'SUCCESS', 'userProperty' : response_data[0], 'transactionDetails': response_data[1]}))
+
+
+
+#  ==================================================================================
+# 계좌 정보 조회
+
+    
+    def watting(self, handler):
+            start = time.time()
+            print("핸들러 명 : ", handler, "\n시작 시간: ", start)
+            while handler.data_flag == False:
+                pythoncom.PumpWaitingMessages()
+                time.sleep(0.001)
+                # end = time.time()
+                # now_time = end - start
+                # if (now_time) >= 30:
+                #     return TimeoutError
+            return self.data_flag_tune(self, handler)
+
+    def data_flag_tune(self, handler):
+        handler.data_flag = False
+        return True
+
+
+
+
+    
+
     def stock_search(self, stock_category, is_continue):
         # 쿼리핸들러를 이용해 DevCenter에 접근하기
         pythoncom.CoInitialize()
@@ -194,7 +269,7 @@ class XAConnector:
         print("요청 성공 유무? : ", req_number)
         # 응답이 올 때까지 대기
         print("T8430 응답 대기 : ", XAQueryEventHandlerT8430.data_flag)
-        result = XAConnector.watting(XAConnector, XAQueryEventHandlerT8430)
+        result = self.watting(self, XAQueryEventHandlerT8430)
         print("T8430 응답 결과 : ", result)
         if result == TimeoutError:
             return result
@@ -219,14 +294,14 @@ class XAConnector:
             stock_list.append(stock)
 
         print("종목 조회 완료되었습니다. =========================================================")
-        XAConnector.stock_lists = stock_list
-        XAConnector.stock_lists_code = stock_category
+        self.stock_lists = stock_list
+        self.stock_lists_code = stock_category
         return stock_list
 
 
     def stock_chart(self, shcode, gubun, ncnt, qrycnt, sdate, edate, is_continue):
         # TODO Print 지우기
-        if XAConnector.is_connected(XAConnector) == None:
+        if self.is_connected(self) == None:
             return ConnectionRefusedError
         
 
@@ -265,7 +340,7 @@ class XAConnector:
 
             # 응답이 올 때까지 대기
             print("T4201 응답 대기 : ", XAQueryEventHandlerT4201.data_flag)
-            result = XAConnector.watting(XAConnector, XAQueryEventHandlerT4201)
+            result = self.watting(self, XAQueryEventHandlerT4201)
             print("T4201 응답 결과 : ", result)
             if result == TimeoutError:
                 return TimeoutError
@@ -295,7 +370,7 @@ class XAConnector:
 
             # 응답이 올 때까지 대기
             print("T4201 응답 대기 : ", XAQueryEventHandlerT4201.data_flag)
-            result = XAConnector.watting(XAConnector, XAQueryEventHandlerT4201)
+            result = self.watting(self, XAQueryEventHandlerT4201)
             print("T4201 응답 결과 : ", result)
             if result == TimeoutError:
                 return TimeoutError
@@ -330,8 +405,8 @@ class XAConnector:
     
     def stock_tradding(self, acnt_no, input_pw, isu_no, ord_qty, ord_prc, bns_tp_code, ordprc_ptn_code):
         # TODO Print 지우기
-        print("접속상태 확인 : ", XAConnector.is_connected(XAConnector), '데이터들 : ', acnt_no, input_pw, isu_no, ord_qty, ord_prc, bns_tp_code, ordprc_ptn_code)
-        if XAConnector.is_connected(XAConnector) == None:
+        print("접속상태 확인 : ", self.is_connected(self), '데이터들 : ', acnt_no, input_pw, isu_no, ord_qty, ord_prc, bns_tp_code, ordprc_ptn_code)
+        if self.is_connected(self) == None:
             return ConnectionRefusedError
         
 
@@ -360,7 +435,7 @@ class XAConnector:
 
         # 응답이 올 때까지 대기
         print("CSPAT00600 응답 대기 : ", XAQueryEventHandlerCSPAT00600.data_flag)
-        result = XAConnector.watting(XAConnector, XAQueryEventHandlerCSPAT00600)
+        result = self.watting(self, XAQueryEventHandlerCSPAT00600)
         print("CSPAT00600 응답 결과 : ", result)
         if result == TimeoutError:
             return TimeoutError
@@ -386,8 +461,8 @@ class XAConnector:
     
     def stockTraddingState(self, acnt_no, input_pw, isu_no, ord_dt):
         # TODO Print 지우기
-        print("접속상태 확인 : ", XAConnector.is_connected(XAConnector), '데이터들 : ', acnt_no, input_pw, isu_no, ord_dt)
-        if XAConnector.is_connected(XAConnector) == None:
+        print("접속상태 확인 : ", self.is_connected(self), '데이터들 : ', acnt_no, input_pw, isu_no, ord_dt)
+        if self.is_connected(self) == None:
             return ConnectionRefusedError
         
 
@@ -418,7 +493,7 @@ class XAConnector:
 
         # 응답이 올 때까지 대기
         print("CSPAQ13700 응답 대기 : ", XAQueryEventHandlerCSPAQ13700.data_flag)
-        result = XAConnector.watting(XAConnector, XAQueryEventHandlerCSPAQ13700)
+        result = self.watting(self, XAQueryEventHandlerCSPAQ13700)
         print("CSPAQ13700 응답 결과 : ", result)
         if result == TimeoutError:
             return TimeoutError
@@ -450,9 +525,9 @@ class XAConnector:
     def high_volume_stock_search(self):
         time.sleep(1)
         # TODO Print 지우기
-        print("high_volume_stock_search 접속상태 확인 : ", XAConnector.is_connected(XAConnector))
+        print("high_volume_stock_search 접속상태 확인 : ", self.is_connected(self))
         print("API상태 확인 : ", self.xa_session.IsLoadAPI())
-        if XAConnector.is_connected(XAConnector) == None:
+        if self.is_connected(self) == None:
             return ConnectionRefusedError
         
 
@@ -480,7 +555,7 @@ class XAConnector:
         print("이거 존재하니? : ", inst_xaquery_t1452)
         # 응답이 올 때까지 대기
         print("T1452 응답 대기 : ", XAQueryEventHandlerT1452.data_flag)
-        result = XAConnector.watting(XAConnector, XAQueryEventHandlerT1452)
+        result = self.watting(self, XAQueryEventHandlerT1452)
         print("T1452 응답 결과 : ", result)
         if result == TimeoutError:
             return TimeoutError

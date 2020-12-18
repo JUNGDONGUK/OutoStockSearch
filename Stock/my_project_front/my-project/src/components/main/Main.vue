@@ -13,7 +13,8 @@ import StockSearch from '@/components/search/StockSearch.vue';
 export default {
     data () {
         return {
-            accountList: this.$session.get('accountList')
+            accountList: this.$session.get('accountList'),
+            isload: false
         };
     },
     components: {
@@ -22,41 +23,41 @@ export default {
     },
     created () {
         if ((this.$session.get('userId') === undefined) || (this.$session.get('accountList') === undefined)) {
-            alert('체크하긴한다.');
-            this.userCheck();
+            console.log('비정상적인 접속입니다.');
+            this.$router.push(`/login`);
         } else {
             this.isload = true;
         }
     },
     methods: {
         userCheck () {
-            this.$Axios.post(`${process.env.APIURL}/login/`)
-                .then(response => {
-                    let data = response.data;
-                    if (data.status === 'SUCCESS') {
-                        // Vue의 server session에 데이터 담아주기
-                        if (data.data.user_id === null || data.data.accounts === null) {
-                            alert('로그인을 먼저 진행해주세요');
-                            this.$router.push(`/login`);
-                        }
-                        this.$session.set('userId', data.data.user_id);
-                        this.$session.set('accountList', data.data.accounts);
-                        this.$nextTick(function () {
-                            this.$forceUpdate();
-                        });
-                    } else {
-                        alert(`${data.error}`);
-                    }
-                });
+            // this.$Axios.post(`${process.env.APIURL}/login/`)
+            //     .then(response => {
+            //         let data = response.data;
+            //         if (data.status === 'SUCCESS') {
+            //             // Vue의 server session에 데이터 담아주기
+            //             if (data.data.user_id === null || data.data.accounts === null) {
+            //                 console.log('로그인을 먼저 진행해주세요');
+            //                 this.$router.push(`/login`);
+            //             }
+            //             this.$session.set('userId', data.data.user_id);
+            //             this.$session.set('accountList', data.data.accounts);
+            //             this.$nextTick(function () {
+            //                 this.$forceUpdate();
+            //             });
+            //         } else {
+            //             alert(`${data.error}`);
+            //         }
+            //     });
         },
         forceLogout () {
-            alert('로그인 페이지로 이동합니다.');
+            console.log('로그인 페이지로 이동합니다.');
             this.$session.clear();
             this.$Axios.get(`${process.env.APIURL}/logout/`)
                 .then(response => {
                     let data = response.data;
                     if (data.status === 'SUCCESS') {
-                        alert('이동하긴해');
+                        console.log('이동하긴해');
                         this.$router.push(`/login`);
                     } else {
                         alert(`${data.error}`);

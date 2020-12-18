@@ -1,6 +1,6 @@
 <template>
     <section>
-        <article class='login-wrapper'>
+        <article class='login-wrapper' v-if="!isLoading">
             <div class="input_pack">
                 <input type="text" placeholder="아이디를 입력해주세요" id='loginId' class="login id" v-model="loginId" title="아이디입력">
             </div>
@@ -12,6 +12,9 @@
             </div>
             <button class="login-button" @click="doLogin">로그인</button>
         </article>
+        <div id='loadingBar' v-if="isLoading"> <!--  -->
+            <img src='../../../dist/img/lodingBar.gif'/>
+        </div>
     </section>
 </template>
 
@@ -23,26 +26,35 @@ export default {
             loginId: '',
             loginPassword: '',
             loginCertPassword: '',
-            show: false
+            show: false,
+            isLoading: false
         };
     },
     created () {
-        this.$session.clear();
+        this.$session.get('userId') !== null ? this.$session.clear() : this.$session.get('accountList') !== null ? this.$session.clear() : this.$router.push('/');
     },
     methods: {
+        idCheack () {
+            alert('아이디를 입력하지 않으셨습니다. 아이디를 입력해주세요.', () => {
+                document.getElementById('loginId').focus();
+                this.isLoading = false;
+                return false;
+            });
+        },
+        pwCheack () {
+            alert('비밀번호를 입력하지 않으셨습니다. 비밀번호를 입력해주세요.', () => {
+                document.getElementById('loginPassword').focus();
+                this.isLoading = false;
+                return false;
+            });
+        },
+        loginCheack () {
+            console.log('접속을 환영합니다.');
+        },
         doLogin () {
-            if (this.loginId === '') {
-                alert('아이디를 입력하지 않으셨습니다. 아이디를 입력해주세요.', () => {
-                    document.getElementById('loginId').focus();
-                });
-                return;
-            } else if (this.loginPassword === '') {
-                alert('비밀번호를 입력하지 않으셨습니다. 비밀번호를 입력해주세요.', () => {
-                    document.getElementById('loginPassword').focus();
-                });
-                return;
-            }
-
+            this.isLoading = true;
+            document.getElementsByTagName('body')[0].style.overflow = 'hidden';
+            (this.loginId === '') ? this.idCheack() : (this.loginPassword === '') ? this.pwCheack() : this.loginCheack();
             let loginId = this.loginId.trim();
             let loginPw = this.loginPassword.trim();
             let loginCertPassword = this.loginCertPassword.trim();
@@ -60,14 +72,20 @@ export default {
                         // 배포하고 싶다면 pw들은 암호화 처리해야된다.
                         this.$session.set('userId', loginId);
                         this.$session.set('accountList', data.data.accounts);
-                        this.$router.push('/');
+                        this.$nextTick(function () {
+                            this.$router.push('/');
+                        });
                     } else {
+                        this.isLoading = false;
                         alert(`${data.error}`);
                         document.getElementById('loginId').value = '';
                         document.getElementById('loginPassword').value = '';
                         document.getElementById('loginCertPassword').value = '';
                     }
                 });
+        },
+        makeLoadingBar () {
+
         }
     }
 };
@@ -93,4 +111,19 @@ export default {
         color: blanchedalmond;
         font-size: larger;
     }
+    #loadingBar {
+        z-index: 999999;
+        position: absolute;
+        text-align: center;
+        margin: auto;
+        width: 98vw;
+        height: 98vh;
+    }
+    img {
+        margin-top: 15%;
+        width: 200px;
+        height: 200px;
+        object-fit: cover;
+    }
+
 </style>

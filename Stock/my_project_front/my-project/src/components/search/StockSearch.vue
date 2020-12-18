@@ -2,12 +2,12 @@
     <section id='searchSection' v-if="isLoad">
         <!-- <PopupAccount :accountList='accountList'/> -->
         <nav class="search-wrapper">
-            <select id="stockCategory" class="search">
+            <select v-model="stockCategoryId" class="search">
                 <option>전체</option>
                 <option>코스피</option>
                 <option>코스닥</option>
             </select>
-            <input id="stockName" type="text" class="search" placeholder="종목을 검색하세요">
+            <input v-model="stockNameId" type="text" class="search" placeholder="종목을 검색하세요">
             <button class="search-button" @click="stockSearch">종목 검색</button>
         </nav>
         <article @click="popupStockDetail(stock)" style="cursor: pointer;" class='stock-list' :key="stockIndex" v-for="(stock, stockIndex) in stockList">
@@ -45,11 +45,14 @@ export default {
     data () {
         return {
             title: '',
+            stockNameId: '',
+            stockCategoryId: '전체',
             chartData: [],
             stockList: [],
             isLoad: false,
+            // eslint-disable-next-line
+            // isLoad: (!this.$session.get('userAccountNum')) ? false : true,
             show: false,
-            isload: false,
             shcode: '',
             gubun: 2,
             ncnt: 1,
@@ -58,47 +61,40 @@ export default {
             edate: this.$moment(new Date()).format('YYYYMMDD')
         };
     },
+    created () {
+        // this.stockSearch();
+        if (!this.$session.get('userProperty')) {
+            this.isLoad = false;
+        } else {
+            this.isLoad = true;
+        }
+    },
     components: {
         PopupStock
         // PopupAccount
     },
-    created () {
-        alert('목록조회 시작');
-        this.stockSearch();
-        this.$forceUpdate();
-    },
     methods: {
         stockSearch () {
             let stockCategory = 0;
-            // if (!(document.getElementById('stockCategory').value)) {
-            //     let stockCategory = document.getElementById('stockCategory').value;
-            //     if (stockCategory === '전체') {
-            //         stockCategory = 0;
-            //     } else if (stockCategory === '코스피') {
-            //         stockCategory = 1;
-            //     } else {
-            //         stockCategory = 2;
-            //     }
-            // } else {
-            //     stockCategory = 0;
-            // }
-            console.log(stockCategory);
-            alert('목록조회 시작01 : ' + stockCategory);
-            // let stockName = document.getElementById('stockName').value;
-            let stockName = '';
+            switch (this.stockCategoryId) {
+            case '코스피': stockCategory = 1; break;
+            case '코스닥': stockCategory = 2; break;
+            default : stockCategory = 0;
+            }
+            console.log('목록조회 시작 cate : ' + stockCategory);
             let formData = new FormData();
             formData.append('stockCategory', stockCategory);
-            formData.append('stockName', stockName);
-            alert('왜 안나오지? 01');
+            formData.append('stockName', this.stockNameId);
+            console.log('왜 안나오지? 01');
+            // this.$Axios.get(`${process.env.APIURL}/stocksearch/${stockCategory}/${this.stockNameId}/`)
             this.$Axios.post(`${process.env.APIURL}/stocksearch/`, formData)
                 .then(response => {
-                    alert('왜 안나오지? 02');
+                    console.log('왜 안나오지? 02');
                     let data = response.data;
                     if (data.status === 'SUCCESS') {
-                        alert('왜 안나오지? 03');
+                        console.log('왜 안나오지? 03');
                         this.stockList = data.data;
                         console.log(this.stockList);
-                        this.isLoad = true;
                         this.$forceUpdate();
                     } else {
                         if (data.errorCode === '001') {
@@ -136,8 +132,6 @@ export default {
                             let stockChartData = {'stockDate': stockDate, 'stockLow': stockLow, 'stockOpen': stockOpen, 'stockClose': stockClose, 'stockHigh': stockHigh};
                             this.chartData.push(stockChartData);
                         }
-                        console.log('Main에서 찍은 값');
-                        console.log(this.chartData);
                         this.$nextTick(function () {
                             this.show = true;
                             document.getElementsByTagName('body')[0].style.overflow = 'hidden';
